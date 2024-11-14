@@ -8,4 +8,9 @@ import org.mockito.*;
 
 public class TestLibrary {
 
+
+    public static void main(final String[] args) {
+        System.out.println("TestLibrary");
+    }
+
 }
