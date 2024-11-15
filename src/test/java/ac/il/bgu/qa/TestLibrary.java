@@ -157,4 +157,75 @@ public class TestLibrary {
         Book invalidAuthor = new Book("123", "Test Book", "-Author");
         assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidAuthor));
     }
+    @Test
+    public void GivenNullIsbn_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        Book null_isbn = new Book(null, "Test Book", "Test Author");
+        assertThrows(IllegalArgumentException.class, () -> library.addBook(null_isbn), "Invalid ISBN.");
+    }
+
+    @Test
+    public void GivenNullBook_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> library.addBook(null), "Invalid book.");
+    }
+
+    @Test
+    public void GivenNullTitle_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> library.addBook(book_null_title), "Invalid title.");
+    }
+
+    @Test
+    public void GivenNullAuthor_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> library.addBook(book_null_author), "Invalid author.");
+    }
+
+    @Test
+    public void GivenBookWithInvalidBorrowedState_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> library.addBook(book_borrowed), "Book with invalid borrowed state.");
+    }
+
+    @Test
+    public void GivenAuthorNameStartingWithNonAlphabeticCharacter_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        Book invalidAuthorStart = new Book("9780306406157", "Test Book", "-JohnDoe");
+        assertThrows(IllegalArgumentException.class,
+                () -> library.addBook(invalidAuthorStart), "Author name starting with non-alphabetic character should throw an exception.");
+    }
+
+    @Test
+    public void GivenAuthorNameEndingWithNonAlphabeticCharacter_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        Book invalidAuthorend = new Book("9780306406157", "Test Book", "JohnDoe--");
+        assertThrows(IllegalArgumentException.class,
+                () -> library.addBook(invalidAuthorend), "Author name ending with non-alphabetic character should throw an exception.");
+    }
+
+    @Test
+    public void GivenAuthorNameWithDigits_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        Book invalidAuthorWithDigit = new Book("9780306406157", "Test Book", "John123Doe");
+        assertThrows(IllegalArgumentException.class,
+                () -> library.addBook(invalidAuthorWithDigit), "Author name with digits should throw an exception.");
+    }
+
+    @Test
+    public void GivenAuthorNameWithSpecialCharacters_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        Book invalidAuthorWithSpecialChar = new Book("9780132350884", "Test Book", "John@Doe");
+        assertThrows(IllegalArgumentException.class,
+                () -> library.addBook(invalidAuthorWithSpecialChar), "Author name with special characters should throw an exception.");
+    }
+
+    @Test
+    public void GivenAuthorNameWithConsecutiveHyphens_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        Book invalidAuthorWithConsecutiveHyphens = new Book("9780590353427", "Test Book", "John--Doe");
+        assertThrows(IllegalArgumentException.class,
+                () -> library.addBook(invalidAuthorWithConsecutiveHyphens), "Author name with consecutive hyphens should throw an exception.");
+    }
+
+    @Test
+    public void GivenAuthorNameWithConsecutiveApostrophes_WhenAddingBook_ThenThrowIllegalArgumentException() {
+        Book invalidAuthorWithConsecutiveApostrophes = new Book("9783161484100", "Test Book", "O'Neil''O");
+        assertThrows(IllegalArgumentException.class,
+                () -> library.addBook(invalidAuthorWithConsecutiveApostrophes), "Author name with consecutive apostrophes should throw an exception.");
+    }
+
+
+
+
 }
