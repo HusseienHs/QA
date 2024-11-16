@@ -183,7 +183,8 @@ public class TestLibrary {
         return Stream.of(
                 Arguments.of("12345", "Invalid ISBN."), // check
                 Arguments.of(null, "Invalid ISBN."),
-                Arguments.of("", "Invalid ISBN.")
+                Arguments.of("", "Invalid ISBN."),
+                Arguments.of("invalidISBN","Invalid ISBN.")
         );
     }
 
@@ -195,7 +196,7 @@ public class TestLibrary {
     }
 
     @Test
-    public void GivenNonExistingBookByISBN_WhenBorrowBook_ThenThrowsIllegalArgumentException() {
+    public void GivenNonExistingBookByISBN_WhenBorrowBook_ThenThrowsBookNotFoundException() {
         String isbn = "9750306406167";
         BookNotFoundException thrown = assertThrows(BookNotFoundException.class, () -> library.borrowBook(isbn, user.getId()),
                 "Book not found!");
@@ -330,11 +331,6 @@ public class TestLibrary {
         assertEquals("Invalid ISBN.", thrown.getMessage());
     }
 
-    @Test
-    public void GivenInvalidISBN_WhenBorrowBook_ThenIllegalArgumentException() {
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.borrowBook("invalidISBN", "123456789012"));
-        assertEquals("Invalid ISBN.", thrown.getMessage());
-    }
 
     @Test
     public void GivenBookNotFound_WhenBorrowBook_ThenBookNotFoundException() {
@@ -343,13 +339,20 @@ public class TestLibrary {
         assertEquals("Book not found!", thrown.getMessage());
     }
 
-    @Test
-    public void GivenInvalidUserId_WhenBorrowBook_ThenIllegalArgumentException() {
-        Book book = new Book("9780306406157", "Some Book", "Some Author");
-        when(mockDatabaseService.getBookByISBN("9780306406157")).thenReturn(book);
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> library.borrowBook("9780306406157", "invalidUserId"));
-        assertEquals("Invalid user Id.", thrown.getMessage());
+
+    private static Stream<Arguments> provideInvalidUserIDsForBorrowBook() {
+        return Stream.of(
+                Arguments.of("invalidUserId", "Invalid user Id."),
+                Arguments.of(null,"Invalid user Id.")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidUserIDsForBorrowBook")
+    public void GivenInvalidUserID_WhenBorrowBook_ThenThrowsIllegalArgumentException(String userid, String expectedMessage) {
+        when(mockDatabaseService.getBookByISBN(book.getISBN())).thenReturn(book);
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.borrowBook(book.getISBN(), userid));
+        assertEquals(expectedMessage, thrown.getMessage());
     }
 
 
@@ -454,6 +457,17 @@ public class TestLibrary {
         assertEquals("No reviews found!", thrown.getMessage());
     }
     @Test
+    public void GivenNullReviews_WhenNotifyUserWithBookReviews_ThenThrowsNoReviewsFoundException() {
+        when(mockDatabaseService.getBookByISBN(book.getISBN())).thenReturn(book);
+        when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
+        when(mockReviewService.getReviewsForBook(book.getISBN())).thenReturn(null);
+        NoReviewsFoundException thrown = assertThrows(NoReviewsFoundException.class,
+                () -> library.notifyUserWithBookReviews(book.getISBN(), user.getId()),
+                "No reviews found!");
+        assertEquals("No reviews found!", thrown.getMessage());
+    }
+
+    @Test
     public void GivenReviewServiceUnavailable_WhenNotifyUserWithBookReviews_ThenThrowsReviewServiceUnavailableException() {
         when(mockDatabaseService.getBookByISBN(book.getISBN())).thenReturn(book);
         when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
@@ -464,6 +478,8 @@ public class TestLibrary {
                 "Review service unavailable!");
         assertEquals("Review service unavailable!", thrown.getMessage());
     }
+
+
 
 
     @Test
