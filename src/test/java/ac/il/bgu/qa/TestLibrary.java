@@ -465,20 +465,6 @@ public class TestLibrary {
         assertEquals("Review service unavailable!", thrown.getMessage());
     }
 
-    @Test
-    public void GivenNotificationFails_WhenNotifyUserWithBookReviews_ThenThrowsNotificationException()  {
-
-        List<String> reviews = Arrays.asList("Excellent book!", "Must read!");
-        when(mockDatabaseService.getBookByISBN(book.getISBN())).thenReturn(book);
-        when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
-        when(mockReviewService.getReviewsForBook(book.getISBN())).thenReturn(reviews);
-
-        // Simulate the notification service throwing an exception
-        doThrow(new NotificationException("Failed"))
-                .when(mockNotificationService).notifyUser (eq(user.getId()), anyString());
-
-    }
-
 
     @Test
     void borrow_WhenAlreadyBorrowed_ShouldThrowException() {
@@ -563,6 +549,23 @@ public class TestLibrary {
         // Act & Assert
         assertDoesNotThrow(() -> library.addBook(validAuthorWithPeriod),
                 "Author name containing a period should not throw an exception.");
+    }
+
+
+    @Test
+    public void GivenNotificationFails_WhenNotifyUserWithBookReviews_ThenThrowsNotificationException() throws NotificationException {
+        List<String> reviews = Arrays.asList("Excellent book!", "Must read!");
+        when(mockDatabaseService.getBookByISBN(book.getISBN())).thenReturn(book);
+        when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
+        when(mockReviewService.getReviewsForBook(book.getISBN())).thenReturn(reviews);
+
+        doThrow(new NotificationException("Failed"))
+                .when(mockNotificationService).notifyUser(eq(user.getId()), anyString());
+
+        NotificationException thrown = assertThrows(NotificationException.class,
+                () -> library.notifyUserWithBookReviews(book.getISBN(), user.getId()),
+                "Notification failed!");
+        assertEquals("Notification failed!", thrown.getMessage());
     }
 
 }
