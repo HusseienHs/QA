@@ -58,6 +58,9 @@ public class TestLibrary {
                 Arguments.of(new Book("9780306406157", "Test Book", null), "Invalid author."),
                 Arguments.of(new Book("9780306406157", "", "Test Author"), "Invalid title."),
                 Arguments.of(new Book("9780306406157", "Test Book", "Invalid@Author"), "Invalid author."),
+                Arguments.of(new Book("9780306406157", "Test Book", "Mary--Jane"), "Invalid author."),
+                Arguments.of(new Book("9780306406157", "Test Book", "John-Doe--Smith"), "Invalid author."),
+                Arguments.of(new Book("9780306406157", "Test Book", "Mary--Jane"), "Invalid author."),
                 Arguments.of(new Book("9780306406158", "Book Title", "Author"), "Invalid ISBN."), // Wrong check digit
                 Arguments.of(new Book("978-0A0-6406157", "Book Title", "Author"), "Invalid ISBN.") // Invalid characters
         );
