@@ -6,10 +6,16 @@ import ac.il.bgu.qa.services.NotificationService;
 import ac.il.bgu.qa.services.ReviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -18,7 +24,7 @@ public class TestLibrary {
 
     private Book book;
     private User user;
-    private NotificationService mockNotificationService;
+    private static NotificationService mockNotificationService;
     private DatabaseService mockDatabaseService;
     private ReviewService mockReviewService;
     private Library library;
@@ -45,30 +51,25 @@ public class TestLibrary {
     // add book method tests
 
 
-    @Test
-    public void GivenInvalidISBNBook_WhenaddBook_ThenIllegalArgumentException() {
-        Book invalidbook = new Book(null, "Test Book", "Test Author");
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidbook)
-                , "Invalid ISBN.");
-        assertEquals(thrown.getMessage(), "Invalid ISBN.");
+    private static Stream<Arguments> provideInvalidBooksForAddBook() {
+        return Stream.of(
+                Arguments.of(new Book(null, "Test Book", "Test Author"), "Invalid ISBN."),
+                Arguments.of(new Book("9780306406157", null, "Test Author"), "Invalid title."),
+                Arguments.of(new Book("9780306406157", "Test Book", null), "Invalid author."),
+                Arguments.of(new Book("9780306406157", "", "Test Author"), "Invalid title."),
+                Arguments.of(new Book("9780306406157", "Test Book", "Invalid@Author"), "Invalid author."),
+                Arguments.of(new Book("9780306406158", "Book Title", "Author"), "Invalid ISBN."), // Wrong check digit
+                Arguments.of(new Book("978-0A0-6406157", "Book Title", "Author"), "Invalid ISBN.") // Invalid characters
+        );
     }
 
-    @Test
-    public void GivenInvalidTitleBook_WhenaddBook_ThenIllegalArgumentException() {
-        Book invalidbook = new Book("9780306406157", null, "Test Author");
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidbook)
-                , "Invalid title.");
-        assertEquals(thrown.getMessage(), "Invalid title.");
+    @ParameterizedTest
+    @MethodSource("provideInvalidBooksForAddBook")
+    public void GivenInvalidBook_WhenAddBook_ThenIllegalArgumentException(Book invalidBook, String expectedMessage) {
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidBook));
+        assertEquals(expectedMessage, thrown.getMessage());
     }
 
-
-    @Test
-    public void GivenInvalidAuthorBook_WhenaddBook_ThenIllegalArgumentException() {
-        Book invalidbook = new Book("9780306406157", "Test Book", null);
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidbook)
-                , "Invalid author.");
-        assertEquals(thrown.getMessage(), "Invalid author.");
-    }
 
     @Test
     public void GivenBarrowedBook_WhenaddBook_ThenIllegalArgumentException() {
@@ -114,13 +115,6 @@ public class TestLibrary {
     }
 
 
-    @Test
-    public void GivenEmptyTitleBook_WhenaddBook_ThenIllegalArgumentException() {
-        Book invalidbook = new Book("9780306406157", "", "Test Author");
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidbook)
-                , "Invalid title.");
-        assertEquals(thrown.getMessage(), "Invalid title.");
-    }
 
     @Test
     public void testAddBook_BookAlreadyExists() {
@@ -130,23 +124,26 @@ public class TestLibrary {
     }
 
     // registerUser function
-    @Test
-    public void GivenInValidIDUser_WhenRegisterUser_ThenThrowsIllegalArgumentException() {
-        User invaliduser = new User("invalidUser", "a", mockNotificationService);
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.registerUser(invaliduser)
-                , "Invalid user Id.");
 
-        assertEquals(thrown.getMessage(), "Invalid user Id.");
+
+    private static Stream<Arguments> provideInvalidUsersForRegisterUser () {
+        return Stream.of(
+                Arguments.of(new User("invalidUser ", "a", mockNotificationService), "Invalid user Id."), // check
+                Arguments.of(new User("", "123456789012", mockNotificationService), "Invalid user name."), //check
+                Arguments.of(new User(null, "123456789012", mockNotificationService), "Invalid user name."), //check
+                Arguments.of(new User("invalidUser ", null, mockNotificationService), "Invalid user Id."), //check
+                Arguments.of(new User("invalidUser ", "123456789012", null), "Invalid notification service.") //check
+        );
     }
 
-    @Test
-    public void GivenInValidNameUser_WhenRegisterUser_ThenThrowsIllegalArgumentException() {
-        User invaliduser = new User("", "123456789012", mockNotificationService);
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.registerUser(invaliduser)
-                , "Invalid user name.");
-
-        assertEquals(thrown.getMessage(), "Invalid user name.");
+    @ParameterizedTest
+    @MethodSource("provideInvalidUsersForRegisterUser")
+    public void GivenInvalidUser_WhenRegisterUser_ThenThrowsIllegalArgumentException(User invalidUser , String expectedMessage) {
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.registerUser (invalidUser ));
+        assertEquals(expectedMessage, thrown.getMessage());
     }
+
+
 
     @Test
     public void GivenValidUser_WhenRegisterUser_ThenUserIsRegisteredInDatabase() {
@@ -178,37 +175,26 @@ public class TestLibrary {
         assertEquals("Invalid user.", thrown.getMessage());
     }
 
-    @Test
-    public void GivenInvalidUserName_WhenRegisterUser_ThenThrowsIllegalArgumentException() {
-        User invalidUser = new User(null, "123456789012", mockNotificationService);
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> library.registerUser(invalidUser),
-                "Invalid user name.");
-        assertEquals("Invalid user name.", thrown.getMessage());
-    }
 
-    @Test
-    public void GivenInvalidIDUser_WhenRegisterUser_ThenThrowsIllegalArgumentException() {
-        User invalidUser = new User("invalidUser", null, mockNotificationService);
-
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> library.registerUser(invalidUser),
-                "Invalid user Id.");
-        assertEquals("Invalid user Id.", thrown.getMessage());
-    }
-
-    @Test
-    public void GivenInvalidUserService_WhenRegisterUser_ThenThrowsIllegalArgumentException() {
-        User invalidUser = new User("invalidUser", "123456789012", null);
-
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> library.registerUser(invalidUser),
-                "Invalid notification service.");
-        assertEquals("Invalid notification service.", thrown.getMessage());
-    }
 
     // borrow book function
+
+
+    private static Stream<Arguments> provideInvalidISBNsForBorrowBook() {
+        return Stream.of(
+                Arguments.of("12345", "Invalid ISBN."), // check
+                Arguments.of(null, "Invalid ISBN."),
+                Arguments.of("", "Invalid ISBN.")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidISBNsForBorrowBook")
+    public void GivenInvalidISBN_WhenBorrowBook_ThenThrowsIllegalArgumentException(String invalidISBN, String expectedMessage) {
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.borrowBook(invalidISBN, user.getId()));
+        assertEquals(expectedMessage, thrown.getMessage());
+    }
 
     @Test
     public void GivenNonExistingBookByISBN_WhenBorrowBook_ThenThrowsIllegalArgumentException() {
@@ -230,15 +216,7 @@ public class TestLibrary {
         verify(mockDatabaseService, times(1)).borrowBook(book.getISBN(), user.getId());
     }
 
-    @Test
-    public void GivenInvalidISBN_WhenBorrowBook_ThenThrowsIllegalArgumentException() {
-        String invalidISBN = "12345";
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> library.borrowBook(invalidISBN, user.getId()),
-                "Invalid ISBN.");
-        assertEquals("Invalid ISBN.", thrown.getMessage());
-    }
 
     @Test
     public void GivenAlreadyBorrowedBook_WhenBorrowBook_ThenThrowsBookAlreadyBorrowedException() {
@@ -425,34 +403,6 @@ public class TestLibrary {
         assertEquals("User not found!", thrown.getMessage());
     }
 
-
-
-    @Test
-    public void GivenISBNWithIncorrectCheckDigit_WhenAddBook_ThenThrowIllegalArgumentException() {
-        Book invalidBook = new Book("9780306406158", "Book Title", "Author"); // The check digit is wrong
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidBook));
-        assertEquals("Invalid ISBN.", thrown.getMessage());
-    }
-
-    @Test
-    public void GivenISBNWithNonNumericCharacters_WhenAddBook_ThenThrowIllegalArgumentException() {
-        Book invalidBook = new Book("978-0A0-6406157", "Book Title", "Author"); // Invalid characters in the ISBN
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(invalidBook));
-        assertEquals("Invalid ISBN.", thrown.getMessage());
-    }
-
-    @Test
-    public void GivenInvalidAuthor_WhenAddBook_ThenThrowIllegalArgumentException() {
-        Book invalidBook = new Book("9780306406157", "Test Book", "Invalid@Author");
-
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            library.addBook(invalidBook);
-        });
-
-        assertEquals("Invalid author.", thrown.getMessage());
-    }
-
-
     @Test
     public void GivenInvalidUserId_WhenGetBookByISBN_ThenThrowIllegalArgumentException() {
         String validISBN = "9780306406157";
@@ -516,6 +466,7 @@ public class TestLibrary {
                 "Review service unavailable!");
         assertEquals("Review service unavailable!", thrown.getMessage());
     }
+
     @Test
     public void GivenNotificationFails_WhenNotifyUserWithBookReviews_ThenThrowsNotificationException() throws NotificationException {
         List<String> reviews = Arrays.asList("Excellent book!", "Must read!");
@@ -523,9 +474,11 @@ public class TestLibrary {
         when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
         when(mockReviewService.getReviewsForBook(book.getISBN())).thenReturn(reviews);
 
+        // Simulate the notification service throwing an exception
         doThrow(new NotificationException("Failed"))
-                .when(mockNotificationService).notifyUser(eq(user.getId()), anyString());
+                .when(mockNotificationService).notifyUser (eq(user.getId()), anyString());
 
+        // Assert that the exception is thrown when trying to notify the user
         NotificationException thrown = assertThrows(NotificationException.class,
                 () -> library.notifyUserWithBookReviews(book.getISBN(), user.getId()),
                 "Notification failed!");
