@@ -73,7 +73,7 @@ public class TestLibrary {
 
     @ParameterizedTest
     @MethodSource("provideInvalidBooksForAddBook")
-    public void GivenInvalidBook_WhenAddBook_ThenIllegalArgumentException(String isbn,String title,String author, String expectedMessage) {
+    public void GivenInvalidBook_WhenAddBook_ThenIllegalArgumentException(String isbn, String title, String author, String expectedMessage) {
         when(book.getISBN()).thenReturn(isbn);
         when(book.getTitle()).thenReturn(title);
         when(book.getAuthor()).thenReturn(author);
@@ -109,7 +109,7 @@ public class TestLibrary {
     // registerUser function
 
 
-    private static Stream<Arguments> provideInvalidUsersForRegisterUser () {
+    private static Stream<Arguments> provideInvalidUsersForRegisterUser() {
         return Stream.of(
                 Arguments.of("invalidUser ", "a", mockNotificationService, "Invalid user Id."), // check
                 Arguments.of("", "123456789012", mockNotificationService, "Invalid user name."), //check
@@ -121,14 +121,13 @@ public class TestLibrary {
 
     @ParameterizedTest
     @MethodSource("provideInvalidUsersForRegisterUser")
-    public void GivenInvalidUser_WhenRegisterUser_ThenThrowsIllegalArgumentException(String name,String id,NotificationService notificationService,String expectedMessage) {
+    public void GivenInvalidUser_WhenRegisterUser_ThenThrowsIllegalArgumentException(String name, String id, NotificationService notificationService, String expectedMessage) {
         when(user.getName()).thenReturn(name);
         when(user.getId()).thenReturn(id);
         when(user.getNotificationService()).thenReturn(notificationService);
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.registerUser (user));
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.registerUser(user));
         assertEquals(expectedMessage, thrown.getMessage());
     }
-
 
 
     @Test
@@ -170,8 +169,6 @@ public class TestLibrary {
     }
 
 
-
-
     // borrow book function
 
 
@@ -180,7 +177,7 @@ public class TestLibrary {
                 Arguments.of("12345", "Invalid ISBN."), // check
                 Arguments.of(null, "Invalid ISBN."),
                 Arguments.of("", "Invalid ISBN."),
-                Arguments.of("invalidISBN","Invalid ISBN.")
+                Arguments.of("invalidISBN", "Invalid ISBN.")
         );
     }
 
@@ -216,9 +213,6 @@ public class TestLibrary {
         assertTrue(book.isBorrowed(), "Book should be marked as borrowed."); // Real state is updated
         verify(mockDatabaseService, times(1)).borrowBook(validISBN, userId);
     }
-
-
-
 
 
     @Test
@@ -266,7 +260,7 @@ public class TestLibrary {
         List<String> reviews = new ArrayList<>();
         reviews.add("Great book!");
         reviews.add("Highly recommend!");
-        user = spy(new User("user name","123456789012",mockNotificationService));
+        user = spy(new User("user name", "123456789012", mockNotificationService));
         when(book.getISBN()).thenReturn(validISBN);
         when(book.getTitle()).thenReturn("Test Book");
         String expectedMessage = "Reviews for 'Test Book':\nGreat book!\nHighly recommend!";
@@ -354,7 +348,7 @@ public class TestLibrary {
     private static Stream<Arguments> provideInvalidUserIDsForBorrowBook() {
         return Stream.of(
                 Arguments.of("invalidUserId", "Invalid user Id."),
-                Arguments.of(null,"Invalid user Id.")
+                Arguments.of(null, "Invalid user Id.")
         );
     }
 
@@ -390,7 +384,7 @@ public class TestLibrary {
         return Stream.of(
                 Arguments.of("invalidISBN", "123456789012", "Invalid ISBN."),
                 Arguments.of("9780306406157", "invalidUserId", "Invalid user Id."),
-                Arguments.of("9780306406157",null,"Invalid user Id.")
+                Arguments.of("9780306406157", null, "Invalid user Id.")
         );
     }
 
@@ -459,6 +453,7 @@ public class TestLibrary {
 
         assertEquals("Book was already borrowed!", thrown.getMessage());
     }
+
     @Test
     public void GivenNoReviews_WhenNotifyUserWithBookReviews_ThenThrowsNoReviewsFoundException() {
         when(book.getISBN()).thenReturn(validISBN);
@@ -472,6 +467,7 @@ public class TestLibrary {
                 "No reviews found!");
         assertEquals("No reviews found!", thrown.getMessage());
     }
+
     @Test
     public void GivenNullReviews_WhenNotifyUserWithBookReviews_ThenThrowsNoReviewsFoundException() {
         when(book.getISBN()).thenReturn(validISBN);
@@ -498,8 +494,6 @@ public class TestLibrary {
                 "Review service unavailable!");
         assertEquals("Review service unavailable!", thrown.getMessage());
     }
-
-
 
 
     @Test
@@ -559,6 +553,7 @@ public class TestLibrary {
                 () -> library.addBook(book),
                 "Author name with consecutive apostrophes should throw an exception.");
     }
+
     @Test
     public void givenAuthorisempty_WhenAddBook_ThenThrowIllegalArgumentException() {
         book = spy(new Book("9783161484100", "Test Book", ""));
@@ -571,7 +566,7 @@ public class TestLibrary {
     @Test
     public void givenAuthorNameContainsPeriod_WhenAddBook_ThenNoException() {
         // Arrange
-        book= spy(new Book("9780306406157", "Test Book", "Dr. John Doe"));
+        book = spy(new Book("9780306406157", "Test Book", "Dr. John Doe"));
 
         // Act & Assert
         assertDoesNotThrow(() -> library.addBook(book),
@@ -583,7 +578,7 @@ public class TestLibrary {
     public void GivenNotificationFails_WhenNotifyUserWithBookReviews_ThenThrowsNotificationException() throws NotificationException {
         List<String> reviews = Arrays.asList("Excellent book!", "Must read!");
 
-        user = spy(new User("user name","123456789012",mockNotificationService));
+        user = spy(new User("user name", "123456789012", mockNotificationService));
         when(book.getISBN()).thenReturn(validISBN);
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(book);
         when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
@@ -599,8 +594,4 @@ public class TestLibrary {
 
         assertEquals("Notification failed!", thrown.getMessage());
     }
-
-
-
-
 }
