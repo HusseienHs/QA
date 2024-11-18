@@ -418,9 +418,9 @@ public class TestLibrary {
         String validISBN = "9780306406157";
         String invalidUserId = "123";
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            library.getBookByISBN(validISBN, invalidUserId);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
+            library.getBookByISBN(validISBN, invalidUserId)
+        );
 
         assertEquals("Invalid user Id.", thrown.getMessage());
     }
@@ -432,9 +432,7 @@ public class TestLibrary {
 
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(null);
 
-        BookNotFoundException thrown = assertThrows(BookNotFoundException.class, () -> {
-            library.getBookByISBN(validISBN, validUserId);
-        });
+        BookNotFoundException thrown = assertThrows(BookNotFoundException.class, () -> library.getBookByISBN(validISBN, validUserId));
 
         assertEquals("Book not found!", thrown.getMessage());
     }
@@ -447,9 +445,7 @@ public class TestLibrary {
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(book);
         when(book.isBorrowed()).thenReturn(true);
 
-        BookAlreadyBorrowedException thrown = assertThrows(BookAlreadyBorrowedException.class, () -> {
-            library.getBookByISBN(validISBN, validUserId);
-        });
+        BookAlreadyBorrowedException thrown = assertThrows(BookAlreadyBorrowedException.class, () -> library.getBookByISBN(validISBN, validUserId));
 
         assertEquals("Book was already borrowed!", thrown.getMessage());
     }
