@@ -493,7 +493,7 @@ public class TestLibrary {
 
 
     @Test
-    void returnBook_InvalidISBN_ShouldThrowIllegalArgumentException() {
+    void GivenInvalidISBN_whenReturnBook_thenThrowIllegalArgumentException() {
         // Arrange
         String invalidISBN = "123"; // Assume this is not a valid ISBN.
 
@@ -504,7 +504,7 @@ public class TestLibrary {
     }
 
     @Test
-    void returnBook_BookNotFound_ShouldThrowBookNotFoundException() {
+    void GivenBookNotFound_whenReturnBook_thenThrowBookNotFoundException() {
         String validISBN = "978-3-16-148410-0";
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(null); // No book found.
 
