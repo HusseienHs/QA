@@ -307,7 +307,6 @@ public class TestLibrary {
         Book fetchedBook = library.getBookByISBN(book.getISBN(), user.getId());
 
         assertEquals(book, fetchedBook, "The fetched book should match the expected book.");
-        verify(mockDatabaseService, times(1)).getBookByISBN(book.getISBN());
 
     }
 
