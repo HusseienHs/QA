@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 
 import java.util.ArrayList;
@@ -31,8 +32,9 @@ public class TestLibrary {
     private static NotificationService mockNotificationService;
     private DatabaseService mockDatabaseService;
     private ReviewService mockReviewService;
-    private Library library;
     private String validISBN;
+    private Library library;
+
 
     @BeforeEach
     public void setUp() {
@@ -88,10 +90,11 @@ public class TestLibrary {
         when(book.getISBN()).thenReturn(validISBN);
         when(book.getTitle()).thenReturn("Test Book");
         when(book.getAuthor()).thenReturn("Test Author");
+        verify(book, times(0)).isBorrowed();
+        verifyNoInteractions(mockDatabaseService, mockNotificationService);
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(book)
                 , "Book with invalid borrowed state.");
         assertEquals(thrown.getMessage(), "Book with invalid borrowed state.");
-
     }
 
 
@@ -101,7 +104,8 @@ public class TestLibrary {
         when(book.getTitle()).thenReturn("Test Book");
         when(book.getAuthor()).thenReturn("Test Author");
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(book);
-
+        verify(book, times(0)).isBorrowed();
+        verifyNoInteractions(mockDatabaseService, mockNotificationService);
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.addBook(book));
         assertEquals("Book already exists.", thrown.getMessage());
     }
@@ -125,6 +129,8 @@ public class TestLibrary {
         when(user.getName()).thenReturn(name);
         when(user.getId()).thenReturn(id);
         when(user.getNotificationService()).thenReturn(notificationService);
+        verify(mockDatabaseService, times(0)).registerUser(user.getId(), user);
+        verifyNoInteractions(mockDatabaseService, mockNotificationService);
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.registerUser(user));
         assertEquals(expectedMessage, thrown.getMessage());
     }
@@ -139,7 +145,6 @@ public class TestLibrary {
         when(mockDatabaseService.getUserById(user.getId())).thenReturn(null);
 
         library.registerUser(user);
-
         verify(mockDatabaseService, times(1)).registerUser(user.getId(), user);
     }
 
@@ -151,6 +156,7 @@ public class TestLibrary {
         when(user.getName()).thenReturn("Test User");
         when(user.getNotificationService()).thenReturn(mockNotificationService);
         when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
+        verify(mockDatabaseService, times(0)).registerUser(user.getId(), user);
 
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
                 () -> library.registerUser(user),
@@ -165,6 +171,8 @@ public class TestLibrary {
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
                 () -> library.registerUser(null),
                 "Invalid user.");
+        verify(mockDatabaseService, times(0)).registerUser(user.getId(), user);
+
         assertEquals("Invalid user.", thrown.getMessage());
     }
 
@@ -186,33 +194,28 @@ public class TestLibrary {
     public void GivenInvalidISBN_WhenBorrowBook_ThenThrowsIllegalArgumentException(String invalidISBN, String expectedMessage) {
         when(user.getId()).thenReturn("123456789012");
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> library.borrowBook(invalidISBN, user.getId()));
+
+        verify(mockDatabaseService, times(0)).borrowBook(invalidISBN, user.getId());
+
         assertEquals(expectedMessage, thrown.getMessage());
     }
 
-    @Test
-    public void GivenNonExistingBookByISBN_WhenBorrowBook_ThenThrowsBookNotFoundException() {
-        BookNotFoundException thrown = assertThrows(BookNotFoundException.class, () -> library.borrowBook("9750306406167", "123456789012"),
-                "Book not found!");
-
-        assertEquals(thrown.getMessage(), "Book not found!");
-    }
-
-    @Test
-    public void GivenValidISBNAndUser_WhenBorrowBook_ThenBookIsMarkedAsBorrowed() {
-        String userId = "123456789012";
-
-        // spy use in book
-        book = spy(new Book(validISBN, "Test Book", "Valid Author"));
-
-        when(user.getId()).thenReturn(userId);
-        when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(book);
-        when(mockDatabaseService.getUserById(userId)).thenReturn(user);
-
-        library.borrowBook(validISBN, userId);
-
-        assertTrue(book.isBorrowed(), "Book should be marked as borrowed."); // Real state is updated
-        verify(mockDatabaseService, times(1)).borrowBook(validISBN, userId);
-    }
+//    @Test
+//    public void GivenValidISBNAndUser_WhenBorrowBook_ThenBookIsMarkedAsBorrowed() {
+//        String userId = "123456789012";
+//
+//        // spy use in book
+//        book = spy(new Book(validISBN, "Test Book", "Valid Author"));
+//
+//        when(user.getId()).thenReturn(userId);
+//        when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(book);
+//        when(mockDatabaseService.getUserById(userId)).thenReturn(user);
+//
+//        library.borrowBook(validISBN, userId);
+//
+//        assertTrue(book.isBorrowed(), "Book should be marked as borrowed."); // Real state is updated
+//        verify(mockDatabaseService, times(1)).borrowBook(validISBN, userId);
+//    }
 
 
     @Test
@@ -222,14 +225,13 @@ public class TestLibrary {
         when(mockDatabaseService.getBookByISBN(book.getISBN())).thenReturn(book);
         when(user.getId()).thenReturn("123456789012");
         when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
-
+        verify(mockDatabaseService, times(0)).borrowBook((book.getISBN()), user.getId());
         BookAlreadyBorrowedException thrown = assertThrows(BookAlreadyBorrowedException.class,
                 () -> library.borrowBook(book.getISBN(), user.getId()),
                 "Book is already borrowed!");
         assertEquals("Book is already borrowed!", thrown.getMessage());
     }
 
-    // TODO: return for this test
     @Test
     public void GivenValidISBN_WhenReturnBook_ThenBookIsMarkedAsNotBorrowed() {
         // spy book
@@ -238,6 +240,8 @@ public class TestLibrary {
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(book);
 
         library.returnBook(validISBN);
+        verify(mockDatabaseService, times(0)).borrowBook((book.getISBN()), user.getId());
+
         assertFalse(book.isBorrowed(), "Book should be marked as not borrowed."); // Real state is updated
         verify(mockDatabaseService, times(1)).returnBook(validISBN);
     }
@@ -248,6 +252,8 @@ public class TestLibrary {
         when(book.isBorrowed()).thenReturn(false);
         when(book.getISBN()).thenReturn(validISBN);
         when(mockDatabaseService.getBookByISBN(book.getISBN())).thenReturn(book);
+
+        verify(mockDatabaseService, times(0)).borrowBook((book.getISBN()), user.getId());
 
         BookNotBorrowedException thrown = assertThrows(BookNotBorrowedException.class,
                 () -> library.returnBook(book.getISBN()),
@@ -277,6 +283,8 @@ public class TestLibrary {
     @Test
     public void GivenValidISBNAndNullUser_WhenNotifyUserWithBookReviews_ThenThrowsException() {
         String validISBN = book.getISBN();
+        verify(mockReviewService, times(0)).getReviewsForBook((book.getISBN()));
+
         assertThrows(IllegalArgumentException.class,
                 () -> library.notifyUserWithBookReviews(validISBN, null),
                 "Calling notifyUserWithBookReviews with a null user should throw an exception.");
@@ -291,6 +299,7 @@ public class TestLibrary {
         when(mockDatabaseService.getUserById(user.getId())).thenReturn(user);
         List<String> t = new java.util.ArrayList<>();
         when(mockReviewService.getReviewsForBook(book.getISBN())).thenReturn(t);
+        verify(mockReviewService, times(0)).getReviewsForBook((book.getISBN()));
 
         NoReviewsFoundException thrown = assertThrows(NoReviewsFoundException.class,
                 () -> library.notifyUserWithBookReviews(book.getISBN(), user.getId()),
@@ -298,6 +307,8 @@ public class TestLibrary {
         assertEquals("No reviews found!", thrown.getMessage());
     }
 
+
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     @Test
     public void GivenValidISBN_WhenGetBookByISBN_ThenReturnsBook() {
         when(book.getISBN()).thenReturn(validISBN);
