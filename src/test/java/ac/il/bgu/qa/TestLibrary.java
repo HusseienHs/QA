@@ -229,7 +229,7 @@ public class TestLibrary {
         assertEquals("Book is already borrowed!", thrown.getMessage());
     }
 
-    // TODO: return for this test
+
     @Test
     public void GivenValidISBN_WhenReturnBook_ThenBookIsMarkedAsNotBorrowed() {
         // spy book
@@ -307,6 +307,8 @@ public class TestLibrary {
         Book fetchedBook = library.getBookByISBN(book.getISBN(), user.getId());
 
         assertEquals(book, fetchedBook, "The fetched book should match the expected book.");
+        verify(mockDatabaseService, times(1)).getBookByISBN(book.getISBN());
+
     }
 
     @Test
@@ -415,7 +417,6 @@ public class TestLibrary {
 
     @Test
     public void GivenInvalidUserId_WhenGetBookByISBN_ThenThrowIllegalArgumentException() {
-        String validISBN = "9780306406157";
         String invalidUserId = "123";
 
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
@@ -427,7 +428,6 @@ public class TestLibrary {
 
     @Test
     public void GivenBookNotFound_WhenGetBookByISBN_ThenThrowBookNotFoundException() {
-        String validISBN = "9780306406157";
         String validUserId = "123456789012";
 
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(null);
@@ -439,9 +439,7 @@ public class TestLibrary {
 
     @Test
     public void GivenBookAlreadyBorrowed_WhenGetBookByISBN_ThenThrowBookAlreadyBorrowedException() {
-        String validISBN = "9780306406157";
         String validUserId = "123456789012";
-
         when(mockDatabaseService.getBookByISBN(validISBN)).thenReturn(book);
         when(book.isBorrowed()).thenReturn(true);
 
@@ -563,10 +561,11 @@ public class TestLibrary {
     public void givenAuthorNameContainsPeriod_WhenAddBook_ThenNoException() {
         // Arrange
         book = spy(new Book("9780306406157", "Test Book", "Dr. John Doe"));
-
         // Act & Assert
         assertDoesNotThrow(() -> library.addBook(book),
                 "Author name containing a period should not throw an exception.");
+
+        verify(mockDatabaseService).addBook(book.getISBN(),book);
     }
 
 
@@ -589,5 +588,8 @@ public class TestLibrary {
                 () -> library.notifyUserWithBookReviews(validISBN, user.getId()));
 
         assertEquals("Notification failed!", thrown.getMessage());
+        verify(user,times(5)).sendNotification("Reviews for '" + book.getTitle() + "':\n" + String.join("\n", reviews));
+        verify(mockDatabaseService,times(1)).getBookByISBN(validISBN);
+        verify(mockDatabaseService,times(1)).getUserById(user.getId());
     }
 }
